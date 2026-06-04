@@ -1,0 +1,31 @@
+# Render deployment config — a single web service that builds the React
+# frontend and serves it alongside the Express API.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: letterboxd-stream-fr
+    runtime: node
+    plan: free
+    # Installs both workspaces and builds the client into client/dist,
+    # which the server then serves statically.
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
+      - key: WATCH_REGION
+        value: FR
+      - key: TMDB_LANGUAGE
+        value: fr-FR
+      # Set this in the Render dashboard (Environment tab) — never commit it.
+      - key: TMDB_API_KEY
+        sync: false
+      # Optional free sources.
+      - key: ENABLE_INTERNET_ARCHIVE
+        value: "true"
+      - key: ENABLE_YOUTUBE
+        value: "false"
+      - key: YOUTUBE_API_KEY
+        sync: false
