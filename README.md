@@ -66,14 +66,43 @@ npm run dev
 
 Run them separately with `npm run dev:server` / `npm run dev:client`.
 
-### Production
+### Production (single service)
+
+The Express server serves the built React app from the same origin, so one
+process runs the whole site:
 
 ```bash
 npm run build      # builds the client into client/dist
-npm start          # starts the API server
+npm start          # starts the API server AND serves the frontend
 ```
 
-Serve `client/dist` from any static host and point it at the API origin.
+Then open the server URL (default <http://localhost:5174>). API lives under
+`/api/*`; every other route serves the SPA.
+
+## Deploy to Render
+
+This repo includes a [`render.yaml`](./render.yaml) blueprint for a single
+free web service.
+
+1. Push this repo to GitHub (already done if you're reading this on GitHub).
+2. Go to <https://dashboard.render.com> → **New** → **Blueprint**, and select
+   this repository. Render reads `render.yaml` automatically.
+   - Build command: `npm install && npm run build`
+   - Start command: `npm start`
+   - Health check: `/api/health`
+3. In the service's **Environment** tab, set the secret env var:
+   - `TMDB_API_KEY` = your TMDB key (and optionally `YOUTUBE_API_KEY`).
+   The non-secret vars (`WATCH_REGION=FR`, etc.) come from `render.yaml`.
+4. Deploy. Render gives you a public `https://<name>.onrender.com` URL.
+
+Notes:
+- Render injects `PORT` automatically; the server already reads it.
+- The **free plan sleeps after inactivity**, so the first request after a pause
+  takes ~30s to wake up.
+- ⚠️ Letterboxd sits behind Cloudflare and **sometimes blocks datacenter IPs**.
+  If scraping returns 403 in production, it's the host's IP being blocked — the
+  same code works locally. Mitigations: lower `SCRAPE_CONCURRENCY`, or run the
+  backend from a residential/less-flagged network.
 
 ## Environment variables
 
