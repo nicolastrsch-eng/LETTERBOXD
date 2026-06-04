@@ -100,9 +100,28 @@ Notes:
 - The **free plan sleeps after inactivity**, so the first request after a pause
   takes ~30s to wake up.
 - ⚠️ Letterboxd sits behind Cloudflare and **sometimes blocks datacenter IPs**.
-  If scraping returns 403 in production, it's the host's IP being blocked — the
-  same code works locally. Mitigations: lower `SCRAPE_CONCURRENCY`, or run the
-  backend from a residential/less-flagged network.
+  See [Handling Cloudflare blocks](#handling-cloudflare-blocks) below.
+
+## Handling Cloudflare blocks
+
+Letterboxd has no public API, so the watchlist is scraped from public HTML.
+From cloud/datacenter IPs, Cloudflare may answer with a `403`/`503` challenge
+instead of the page. The app **detects this explicitly** and returns a clear
+`BLOCKED` error (rather than crashing or silently returning nothing), along with
+browser-like request headers, retries with backoff, and polite rate limiting to
+minimise it.
+
+When a host's IP is blocked, the reliable fix is to route scraping through a
+proxy via **`SCRAPE_PROXY`** (or the standard `HTTPS_PROXY`):
+
+```bash
+# any HTTP(S) proxy — a residential/rotating proxy works best against Cloudflare
+SCRAPE_PROXY=http://user:pass@proxy-host:port
+```
+
+On Render, add `SCRAPE_PROXY` in the service's **Environment** tab. No proxy is
+needed when running locally from a normal home/office connection. Other knobs:
+lower `SCRAPE_CONCURRENCY` and raise `SCRAPE_DELAY_MS` to look less bot-like.
 
 ## Environment variables
 
@@ -120,6 +139,7 @@ Notes:
 | `CACHE_TTL_FILM_META_HOURS` | – | `168` | Film-metadata cache TTL. |
 | `SCRAPE_CONCURRENCY` | – | `4` | Parallel film lookups. |
 | `SCRAPE_DELAY_MS` | – | `350` | Polite delay between scrape requests. |
+| `SCRAPE_PROXY` | – | – | Outbound proxy URL for scraping (see below). Falls back to `HTTPS_PROXY`. |
 
 ¹ Without TMDB the app still runs, but subscription availability will be empty
 (only the free sources can contribute).

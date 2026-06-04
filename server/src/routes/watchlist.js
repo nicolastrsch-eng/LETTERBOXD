@@ -77,7 +77,10 @@ router.get('/', async (req, res) => {
     const result = await runPipeline(req.query.username, () => {});
     res.json(result);
   } catch (err) {
-    const status = err.code === 'WATCHLIST_NOT_FOUND' ? 404 : 400;
+    const status =
+      err.code === 'WATCHLIST_NOT_FOUND' ? 404 :
+      err.code === 'BLOCKED' ? 502 :
+      400;
     res.status(status).json({ error: err.message, code: err.code || 'ERROR' });
   }
 });

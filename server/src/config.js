@@ -44,6 +44,13 @@ export const config = {
   scrape: {
     concurrency: num(process.env.SCRAPE_CONCURRENCY, 4),
     delayMs: num(process.env.SCRAPE_DELAY_MS, 350),
+    // Optional outbound proxy for scraping (e.g. to dodge datacenter-IP blocks
+    // on Letterboxd's Cloudflare). Accepts http(s):// proxy URLs.
+    proxy:
+      process.env.SCRAPE_PROXY ||
+      process.env.HTTPS_PROXY ||
+      process.env.https_proxy ||
+      '',
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
       '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
